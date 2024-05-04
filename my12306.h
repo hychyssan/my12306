@@ -1,13 +1,15 @@
 #define _CRT_SECURE_NO_WARNINGS
+#ifndef MY12306_H
+#define MY12306_H
+
+
 
 #include<iostream>
 #include<string>
 #include<vector>
-#include<cmath>
 #include<fstream>
 
 using namespace std;
-
 
 class Train
 {
@@ -28,7 +30,7 @@ public:
 		is >> t.trainnumber >> t.traveltime >> t.begincity >> t.endcity >> t.ticketprice;
 		return is;
 	}
-	friend ostream& operator<<(ostream& os, Train& t) {
+	friend ostream& operator<<(ostream& os, const Train& t) {
 		os << t.trainnumber <<" " << t.traveltime <<" " << t.begincity << " " << t.endcity << " " << t.ticketprice;
 		return os;
 	}
@@ -118,16 +120,16 @@ class CMIS
 {
 private:
 	std::vector<User> users;		//保存乘客信息
-	vector<Ticket> tickets;
+	vector<Ticket> tickets;			//购票信息
 	vector<Train> trainsinfo;		//车次信息
 public:
 	CMIS(){}
+	void addTrain(const Train& train); // 添加车次
+	void addUser(const User& user); // 注册用户
+	void buyTicket(Ticket& ticket); // 购票
+	void refundTicket(string passengername,string trainnumber,string traveldate,string refunddate,string refundtime); // 退票
+	void ShowSoldTickets(); // 显示已售票的记录
 
-	void addTrainsInfo();		//添加车次信息
-	void registerUser();		//添加用户注册信息
-	void buyTicket();			//添加购票信息
-	void refundTicket();		//退票
-	void ShowSoldTickets();		//显示已购票
 
 	void loadTrainInfo();
 	double findTrainPrice(string _trainnumber);
@@ -138,3 +140,4 @@ public:
 };
 
 
+#endif
