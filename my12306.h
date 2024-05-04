@@ -4,11 +4,9 @@
 #include<string>
 #include<vector>
 #include<cmath>
+#include<fstream>
 
 using namespace std;
-
-
-
 
 
 class Train
@@ -20,36 +18,22 @@ protected:
 	string endcity;
 	double ticketprice;
 public:
+	Train(){}
 	Train(string _number,string _time,string _begincity,string _endcity,double _ticketprice)
 		:trainnumber(_number),traveltime(_time),begincity(_begincity),endcity(_endcity),ticketprice(_ticketprice){}
 	string gettrainnumber() const{ return trainnumber; }
 	double getticketprice() const{ return ticketprice; }
-};
 
-class Admin			//管理员
-{
-private:
-	vector<Train> trainsinfo;		//车次信息
-public:
-	
-
-	Admin(){}
-	const vector<Train>& getTrainsInfo() { return trainsinfo; }
-	void addTrainInfo()		//添加车次信息
-	{
-		string number, time, begincity, endcity;
-		int command;
-		double ticketprice;
-		while (cin >> command >> number >> time >> begincity >> endcity >> ticketprice)
-		{
-			if (command == 1)
-			{
-				Train newtrain(number, time, begincity, endcity, ticketprice);
-				trainsinfo.push_back(newtrain);
-			}
-		}
+	friend istream& operator>>(istream& is, Train& t) {
+		is >> t.trainnumber >> t.traveltime >> t.begincity >> t.endcity >> t.ticketprice;
+		return is;
+	}
+	friend ostream& operator<<(ostream& os, Train& t) {
+		os << t.trainnumber <<" " << t.traveltime <<" " << t.begincity << " " << t.endcity << " " << t.ticketprice;
+		return os;
 	}
 };
+
 
 
 class User
@@ -70,11 +54,20 @@ public:
 	string getName() { return name; }
 	int getGender() { return gender;}
 	string getIdnumber(){return idnumber;}
-	int getIdType() { return idtype; }
-	
+	int getIdType()
+	{
+		if (this != nullptr)
+			return idtype;
+	}
 	friend ostream& operator<<(ostream& out,const User& user)
 	{
-		out << user.name;
+		out << user.name << " " << user.gender << " " << user.idnumber << " "<<user.idtype;
+		return out;
+	}
+	friend istream& operator>>(istream& is, User& u)
+	{
+		is >> u.name >> u.gender>> u.idnumber  >> u.idtype;
+		return is;
 	}
 	friend bool operator==(User a, User b)		//判断user类是否相等
 	{
@@ -95,46 +88,147 @@ protected:
 	string traveldate;
 	string buydate;
 	string buytime;
+	double price=0;
 public:
+	Ticket(){}
 	Ticket(string _passengername, string _trainnumber, string _traveldate, string _buydate, string _buytime) :
 		passengername(_passengername), trainnumber(_trainnumber), traveldate(_traveldate), buydate(_buydate), buytime(_buytime) {}
 
-	string getPassengername() { return passengername; }
-	string getTrainnumber() { return trainnumber; }
+	string getPassengerName() { return passengername; }
+	string getTrainNumber() { return trainnumber; }
+	int getSeatLevel() { return seatlevel; }
+	string getTravelDate() { return traveldate; }
+	string getBuyDate() { return buydate;}
+	string getBuyTime() { return buytime; }
+	void setPrice(double _price) { price = _price; }
 	
-	friend ostream& operator<<(ostream& out, const Ticket ticket)
+	friend ostream& operator<<(ostream& out, Ticket t)
 	{
-		out << ticket.passengername << ticket.trainnumber << ticket.seatlevel << ticket.traveldate << ticket.buydate << ticket.buytime;
+		out << t.passengername <<" "<< t.trainnumber <<" "<< t.seatlevel <<" " << t.traveldate <<" " << t.buydate <<" " << t.buytime;
 		return out;
+	}
+	friend istream& operator>>(istream& is, Ticket& t)
+	{
+		is >> t.passengername >> t.trainnumber >> t.seatlevel >> t.traveldate >> t.buydate >> t.buytime;
+		return is;
 	}
 };
 
 
-
-
-
-
-class UserManager
+class CMIS
 {
 private:
 	std::vector<User> users;		//保存乘客信息
 	vector<Ticket> tickets;
-	Admin& admin;		//保存车次信息
+	vector<Train> trainsinfo;		//车次信息
 public:
-	UserManager(Admin& _admin):admin(_admin) {}
-	void registerUser()		//添加用户注册信息
+	CMIS()
 	{
-		string name, idnumber;
-		int gender, idtype,command;
-		while (cin >> command >> name >> idnumber >> gender >> idtype)
+		//loadTrainInfo();		//加载车次信息
+		//loadUsers();
+	}
+
+	void addTrainsInfo()		//添加车次信息
+		//loadTickets();
+		
+		
+	{
+
+		ofstream fout;
+		fout.open("trainsinfo.txt", ios::out);
+		if (!fout) {
+			cout << "无法打开文件\n";
+			return;
+		}
+
+		int command;
+		Train newTrain;
+		while (true)
 		{
-			if (command == 2)
+			if (cin >> command)
 			{
-				User newuser(name, gender, idnumber, idtype);
-				users.push_back(newuser);
+				if (command == 1)
+				{
+					if (cin >> newTrain) {
+						trainsinfo.push_back(newTrain);
+						fout << newTrain << endl;
+					}
+				}
+				if (command == 0)	//测试用！！！！！！！！！！！！！！！！！！！！！！
+				{
+					return;
+				}
+			}
+			else if (cin.eof())
+			{
+				cout << "车次信息输入完毕\n";
+				break;
+			}
+			else
+			{
+				cin.clear();
+				cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // 忽略错误输入直到下一个换行符
 			}
 		}
+		fout.close();
 	}
+
+	void loadTrainInfo() {
+		ifstream fin("trainsinfo.txt", ios::in); // 打开文件以读模式
+		if (!fin) {
+			cout << "无法打开文件\n";
+			return;
+		}
+		Train tempTrain;
+		while (fin >> tempTrain) { // 利用之前定义的输入操作符重载来读取
+			trainsinfo.push_back(tempTrain);
+		}
+		fin.close(); // 关闭文件
+	}
+
+
+	void registerUser()		//添加用户注册信息
+	{
+		ofstream fout;
+		fout.open("usersinfo.txt", ios::out);
+		if (!fout) {
+			cout << "无法打开文件\n";
+			return;
+		}
+
+		int command;
+		User newUser;
+		
+		while (true)
+		{
+			if (cin.eof()) break;
+			if (cin >> command)
+			{
+				if (command == 2)
+				{
+					if (cin >> newUser)
+						users.push_back(newUser);
+						fout << newUser << endl;
+				}
+				if (command == 0)	//测试用！！！！！！！！！！！！！！！！！！！！！！
+				{
+					return;
+				}
+			}
+			else if (cin.eof())
+			{
+				cout << "用户注册完毕！\n";
+				break;
+			}
+			else
+			{
+				cin.clear();
+				cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // 忽略错误输入直到下一个换行符
+			}
+		}
+		fout.close();
+	}
+
 	User* findUser(string _name)		//寻找指定user,返回地址
 	{
 		for (vector<User>::iterator i = users.begin(); i != users.end(); i++)
@@ -147,50 +241,107 @@ public:
 
 	double findTrainPrice(string _trainnumber)
 	{
-		const vector<Train>& trainsinfo = admin.getTrainsInfo();
-		for ( const Train& curtrain : trainsinfo)		//遍历trainsinfo
+		for (vector<Train>::iterator pt = trainsinfo.begin(); pt != trainsinfo.end();pt++)		//遍历trainsinfo
 		{
-			if (curtrain.gettrainnumber() == _trainnumber)
+			if (pt->gettrainnumber() == _trainnumber)
 			{
-				return  curtrain.getticketprice();
+				return  pt->getticketprice();
 			}
 		}
 	}
+
+	void loadTickets()
+	{
+		ifstream fin;
+		fin.open("tickets.txt", ios::in); // 打开票务信息文件
+
+		if (!fin)
+		{
+			cout << "无法打开票务信息文件\n";
+			return;
+		}
+
+		Ticket ticket;
+		// 读取文件中的每一行直到文件结束
+		while (fin >> ticket)
+		{
+			tickets.push_back(ticket);
+		}
+
+		fin.close(); // 关闭文件流
+	}
+
+	void loadUsers() {
+		std::ifstream fin;
+		fin.open("userinfo.txt", std::ios::in); // 打开用户信息文件
+
+		if (!fin) {
+			std::cout << "无法打开用户信息文件\n";
+			return;
+		}
+
+		User user;
+		while (fin >> user) {  // 读取用户信息直到文件末尾
+			users.push_back(user); // 将用户添加到向量中
+		}
+
+		fin.close(); // 关闭文件流
+	}
+
 	void buyTicket()
 	{
+		fstream fout;
+		fout.open("tickets.txt", ios::out);
+		if (!fout) {
+			cout << "无法打开文件\n";
+			return;
+		}
+
 		int command;
-		string passengername;	//
-		int seatlevel;
-		string trainnumber;
-		string traveldate;
-		string buydate;
-		string buytime;
+		Ticket newTicket;
 
-		
-		User* passenger = findUser(passengername);
-
-		while (cin >> command >> passengername >> trainnumber >> seatlevel >> traveldate >> buydate >> buytime)
+		while (true)
 		{
-			if (command == 3)
+			if (cin >> command)
 			{
-
-				double ticketPrice = findTrainPrice(trainnumber);		//找到对应车次票价
-				double discount = 1.0;
-				if (seatlevel == 2)
+				if (command == 3)
 				{
-					switch (passenger->getIdType())
+					if (cin >> newTicket)
 					{
-					case 1:discount = 0.3; break;
-					case 2:discount = 0.5; break;
+						User* passenger = findUser(newTicket.getPassengerName());
+
+						double ticketPrice = findTrainPrice(newTicket.getTrainNumber());		//找到对应车次票价
+						double discount = 1.0;
+						if (newTicket.getSeatLevel() == 2)
+						{
+							switch (passenger->getIdType())
+							{
+							case 1:discount = 0.3; break;
+							case 2:discount = 0.5; break;
+							}
+						}
+						double finalPrice = ticketPrice * discount;
+						newTicket.setPrice(finalPrice);
+
+						tickets.push_back(newTicket);
+						fout << newTicket <<endl;		//将购票信息读入文件中
 					}
 				}
-				double finalPrice = ticketPrice * discount;
-
-				Ticket newTicket(passengername, trainnumber, traveldate, buydate, buytime);
-				tickets.push_back(newTicket);
+				if (command == 0)	//测试用！！！！！！！！！！！！！！！！！！！！！！
+				{
+					return;
+				}
 			}
-
-			
+			else if (cin.eof()) 
+			{ 
+				cout << "车票购买完毕！\n";
+				break; 
+			}
+			else
+			{
+				cin.clear();  // 清除错误状态
+				cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // 忽略错误输入直到下一个换行符
+			}
 		}
 	}
 
@@ -202,29 +353,50 @@ public:
 		string traveldate;
 		string refunddate;
 		string refundtime;
-
-		while (cin >> command >> passengername >> trainnumber >> traveldate >> refunddate >> refundtime)
+		
+		while (true)
 		{
-			if (command == 4)
+			if (cin >> command)
 			{
-				//计算并扣除退票费用给用户（待写）
-				
-
-				for (vector<Ticket>::iterator pt = tickets.begin(); pt != tickets.end(); pt++)
+				if (command == 4)
 				{
-					if (pt->getPassengername() == passengername && pt->getTrainnumber() == trainnumber)		//找到符合删除条件的售票记录
+					//计算并扣除退票费用给用户（待写)
+
+					cin >> passengername >> trainnumber >> traveldate >> refunddate >> refundtime;
+					for (vector<Ticket>::iterator pt = tickets.begin(); pt != tickets.end();)
 					{
-						tickets.erase(pt);
+						if (pt->getPassengerName() == passengername && pt->getTrainNumber() == trainnumber) //找到符合删除条件的售票记录
+						{
+							pt = tickets.erase(pt); // 使用erase的返回值更新迭代器
+						}
+						else
+						{
+							++pt; // 否则正常移动到下一个元素
+						}
 					}
 				}
+				if (command == 0)	//测试用！！！！！！！！！！！！！！！！！！！！！！
+				{
+					return;
+				}
+			}
+			else if (cin.eof())  // 如果我们到达了文件末尾
+			{
+				cout << "退票完毕！\n";
+				break;  // 退出函数
+			}
+			else  // 如果出现了输入错误（例如非整数）
+			{
+				cin.clear();  // 清除错误状态
+				cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // 忽略错误输入直到下一个换行符
 			}
 		}
-
 	}
 
 	void ShowSoldTickets()
 	{
 		int count = 1;
+
 		for (vector<Ticket>::iterator pt = tickets.begin(); pt != tickets.end(); pt++)
 		{
 			cout << count++ << " " << *pt << endl;
